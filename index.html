@@ -429,7 +429,7 @@ async function poll() {
     if (Date.now() >= _protectedUntil) {
       const res = await fetch(`${DB_URL}/state.json?t=${Date.now()}`);
       const data = await res.json();
-      if (data) {
+      if (data && !data.error) {
         const normalized = toArr(data, NUM_TABLES).map(row => toArr(row, MENU.length));
         applyStateToUI(normalized);
       }
