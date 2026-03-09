@@ -384,7 +384,10 @@ function switchTab(t) {
 
 const DB_URL = "https://hoesik-calculator-default-rtdb.asia-southeast1.firebasedatabase.app";
 
+let _isPushing = false;
+
 async function pushState() {
+  _isPushing = true;
   try {
     await fetch(`${DB_URL}/state.json`, {
       method: 'PUT',
@@ -392,6 +395,22 @@ async function pushState() {
       body: JSON.stringify(state)
     });
   } catch(e) { console.warn('Firebase 저장 실패', e); }
+  _isPushing = false;
+}
+
+// Firebase는 배열을 {0:..., 1:...} 객체로 반환할 수 있어서 정규화 필요
+function toArr(val, len) {
+  const arr = Array(len).fill(0);
+  if (!val) return arr;
+  if (Array.isArray(val)) {
+    val.forEach((v, i) => { if (i < len) arr[i] = v || 0; });
+  } else if (typeof val === 'object') {
+    Object.entries(val).forEach(([k, v]) => {
+      const idx = parseInt(k);
+      if (!isNaN(idx) && idx < len) arr[idx] = v || 0;
+    });
+  }
+  return arr;
 }
 
 function applyStateToUI(newState) {
@@ -407,37 +426,18 @@ function applyStateToUI(newState) {
   refreshSummary();
 }
 
-let _lastSnapshot = null;
-
-// Firebase는 배열을 {0:..., 1:...} 객체로 반환할 수 있어서 정규화 필요
-function toArr(val, len) {
-  const arr = Array(len).fill(0);
-  if (!val) return arr;
-  if (Array.isArray(val)) {
-    val.forEach((v, i) => { if (i < len) arr[i] = v || 0; });
-  } else if (typeof val === 'object') {
-    Object.entries(val).forEach(([k, v]) => {
-      const i = parseInt(k);
-      if (!isNaN(i) && i < len) arr[i] = v || 0;
-    });
-  }
-  return arr;
-}
-
 async function poll() {
   try {
-    const res = await fetch(`${DB_URL}/state.json?t=${Date.now()}`);
-    const data = await res.json();
-    if (data) {
-      const normalized = toArr(data, NUM_TABLES).map(t => toArr(t, MENU.length));
-      const snap = JSON.stringify(normalized);
-      if (snap !== _lastSnapshot) {
-        _lastSnapshot = snap;
+    if (!_isPushing) {
+      const res = await fetch(`${DB_URL}/state.json?t=${Date.now()}`);
+      const data = await res.json();
+      if (data) {
+        const normalized = toArr(data, NUM_TABLES).map(row => toArr(row, MENU.length));
         applyStateToUI(normalized);
       }
     }
   } catch(e) {}
-  setTimeout(poll, 2000);
+  setTimeout(poll, 1500);
 }
 
 function startSync() {
@@ -451,7 +451,6 @@ function change(t, i, delta) {
     state[t][i] === 0 ? "0원" : fmt(state[t][i] * MENU[i].price);
   refreshTable(t);
   refreshSummary();
-  _lastSnapshot = JSON.stringify(state); // 폴링이 덮어쓰지 않도록 미리 갱신
   pushState();
 }
 
@@ -516,7 +515,6 @@ function reset(t) {
   });
   refreshTable(t);
   refreshSummary();
-  _lastSnapshot = JSON.stringify(state); // 폴링이 덮어쓰지 않도록 미리 갱신
   pushState();
 }
 
