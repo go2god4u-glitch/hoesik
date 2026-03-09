@@ -5,235 +5,170 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>탐색생물학2팀 회식 계산기</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     body {
       font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-      background: #f5f5f0;
+      background: #f2ede8;
       color: #222;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
     }
 
+    /* 헤더 */
     header {
       background: #8b1a1a;
       color: #fff;
-      padding: 16px 24px;
+      padding: 14px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-
-    header h1 { font-size: 1.3rem; font-weight: 700; }
+    header h1 { font-size: 1.1rem; font-weight: 700; }
 
     /* 전체 합계 바 */
     .summary-bar {
       background: #3d0a0a;
       color: #fff;
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px 24px;
-    }
-
-    .summary-bar .s-label {
-      font-size: 0.82rem;
-      opacity: 0.7;
-      margin-bottom: 2px;
-    }
-
-    .summary-bar .s-val {
-      font-size: 1.05rem;
-      font-weight: 700;
-    }
-
-    .summary-bar .s-item { min-width: 120px; }
-
-    .summary-bar .s-item.ok .s-val  { color: #4ade80; }
-    .summary-bar .s-item.over .s-val { color: #f87171; }
-
-    .summary-divider {
-      width: 1px;
-      height: 36px;
-      background: rgba(255,255,255,0.2);
-    }
-
-    /* 테이블 요약 카드 */
-    .table-cards {
-      display: flex;
-      gap: 10px;
-      padding: 14px 20px;
-      flex-wrap: wrap;
-      background: #f0ebe6;
-      border-bottom: 1px solid #ddd;
-    }
-
-    .table-card {
-      flex: 1;
-      min-width: 140px;
-      background: #fff;
-      border-radius: 8px;
-      padding: 10px 14px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: border-color 0.15s;
-    }
-
-    .table-card:hover { border-color: #8b1a1a; }
-    .table-card.active { border-color: #8b1a1a; }
-
-    .card-title { font-size: 0.8rem; font-weight: 700; color: #8b1a1a; margin-bottom: 4px; }
-    .card-budget { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
-    .card-total { font-size: 1rem; font-weight: 700; }
-    .card-status { font-size: 0.82rem; font-weight: 700; margin-top: 3px; }
-    .card-status.ok { color: #27ae60; }
-    .card-status.over { color: #c0392b; }
-
-    /* tabs */
-    .tabs {
-      display: flex;
+      padding: 10px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 4px;
-      padding: 16px 20px 0;
+    }
+    .s-item { text-align: center; }
+    .s-label { font-size: 0.72rem; opacity: 0.65; margin-bottom: 2px; }
+    .s-val { font-size: 0.95rem; font-weight: 700; }
+    .s-item.ok .s-val  { color: #4ade80; }
+    .s-item.over .s-val { color: #f87171; }
+
+    /* 테이블 탭 */
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: #fff;
       border-bottom: 2px solid #8b1a1a;
     }
-
     .tab-btn {
-      padding: 10px 28px;
+      padding: 12px 4px;
       border: none;
-      border-radius: 8px 8px 0 0;
-      background: #ddd;
-      font-size: 0.95rem;
-      cursor: pointer;
+      background: transparent;
+      font-size: 0.85rem;
       font-weight: 600;
-      transition: background 0.15s;
+      color: #888;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s;
     }
+    .tab-btn.active { color: #8b1a1a; border-bottom-color: #8b1a1a; }
 
-    .tab-btn:hover { background: #ccc; }
-    .tab-btn.active { background: #8b1a1a; color: #fff; }
+    /* 테이블 카드 요약 (탭 아래) */
+    .active-card {
+      background: #fff;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e8e0da;
+    }
+    .ac-budget { font-size: 0.78rem; color: #888; }
+    .ac-total  { font-size: 1rem; font-weight: 700; }
+    .ac-status { font-size: 0.9rem; font-weight: 700; }
+    .ac-status.ok   { color: #27ae60; }
+    .ac-status.over { color: #c0392b; }
 
-    /* panels */
-    .panel { display: none; padding: 20px; }
+    /* 패널 */
+    .panel { display: none; }
     .panel.active { display: block; }
 
-    /* menu table */
-    .menu-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    .menu-table thead { background: #f0e6e6; }
-
-    .menu-table thead th {
-      padding: 12px 10px;
-      text-align: center;
-      font-size: 0.9rem;
-      color: #5a1010;
-    }
-
-    .menu-table tbody tr:not(:last-child) { border-bottom: 1px solid #f0ece8; }
-    .menu-table tbody tr:hover { background: #fdf8f8; }
-
-    .menu-table td {
-      padding: 12px 10px;
-      vertical-align: middle;
-      text-align: center;
-    }
-
-    .menu-table td.name { text-align: left; }
-
-    .item-name { font-weight: 600; font-size: 0.95rem; }
-    .item-desc { font-size: 0.78rem; color: #888; margin-top: 2px; }
-    .price { color: #444; font-size: 0.9rem; white-space: nowrap; }
-
-    .qty-ctrl { display: inline-flex; align-items: center; gap: 6px; }
-
-    .qty-btn {
-      width: 30px; height: 30px;
-      border: 1.5px solid #c44;
-      border-radius: 50%;
-      background: #fff;
-      color: #c44;
-      font-size: 1.1rem;
-      cursor: pointer;
-      line-height: 1;
+    /* 카테고리 구분선 */
+    .cat-header {
+      padding: 8px 16px 4px;
+      font-size: 0.75rem;
       font-weight: 700;
-      transition: background 0.12s, color 0.12s;
+      color: #8b1a1a;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #f2ede8;
     }
 
-    .qty-btn:hover { background: #c44; color: #fff; }
+    /* 메뉴 아이템 */
+    .menu-list { background: #fff; }
 
-    .qty-num {
-      font-size: 1rem; font-weight: 700;
-      min-width: 24px; text-align: center;
-    }
-
-    .amount { font-weight: 600; color: #333; white-space: nowrap; }
-
-    .badge {
-      display: inline-block;
-      font-size: 0.7rem;
-      padding: 2px 7px;
-      border-radius: 10px;
-      margin-top: 3px;
-      font-weight: 600;
-    }
-
-    .badge-main  { background: #fdecea; color: #c0392b; }
-    .badge-lunch { background: #e8f4fd; color: #2471a3; }
-    .badge-meal  { background: #eafaf1; color: #1e8449; }
-    .badge-drink { background: #f3e8fd; color: #7d3c98; }
-
-    /* footer */
-    .footer {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      margin-top: 16px;
-      padding: 16px 20px;
+    .menu-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
+      padding: 13px 16px;
+      border-bottom: 1px solid #f0ece8;
+      gap: 8px;
     }
+    .menu-item:last-child { border-bottom: none; }
 
-    .footer-left { display: flex; flex-direction: column; gap: 4px; }
-    .total-text { font-size: 1.2rem; font-weight: 700; }
-    .budget-info { font-size: 0.85rem; color: #888; }
+    .menu-info { flex: 1; min-width: 0; }
+    .menu-name { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .menu-sub  { font-size: 0.78rem; color: #888; margin-top: 2px; }
 
-    .status { font-size: 1.15rem; font-weight: 700; }
-    .status.over { color: #c0392b; }
-    .status.ok   { color: #27ae60; }
-
-    .reset-btn {
-      padding: 8px 20px;
+    .qty-ctrl { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+    .qty-btn {
+      width: 38px; height: 38px;
+      border: none;
+      border-radius: 50%;
       background: #8b1a1a;
       color: #fff;
-      border: none;
-      border-radius: 6px;
+      font-size: 1.3rem;
+      font-weight: 700;
       cursor: pointer;
-      font-size: 0.9rem;
+      line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.1s;
+      user-select: none;
+    }
+    .qty-btn:active { background: #6a1010; }
+    .qty-num {
+      min-width: 36px;
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #222;
+    }
+    .qty-num.nonzero { color: #8b1a1a; }
+
+    /* 하단 고정 푸터 */
+    .footer {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border-top: 2px solid #e0d6d0;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
+    }
+    .footer-left { flex: 1; }
+    .total-text { font-size: 1.1rem; font-weight: 700; }
+    .status { font-size: 0.88rem; font-weight: 700; margin-top: 2px; }
+    .status.ok   { color: #27ae60; }
+    .status.over { color: #c0392b; }
+
+    .reset-btn {
+      padding: 10px 16px;
+      background: #f2ede8;
+      color: #8b1a1a;
+      border: 1.5px solid #8b1a1a;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
       font-weight: 600;
-      transition: background 0.15s;
+      white-space: nowrap;
     }
+    .reset-btn:active { background: #e8ddd6; }
 
-    .reset-btn:hover { background: #a52020; }
-
-    @media (max-width: 600px) {
-      .tab-btn { padding: 7px 10px; font-size: 0.8rem; }
-      .panel { padding: 12px; }
-      .menu-table thead th:nth-child(4),
-      .menu-table td:nth-child(4) { display: none; }
-      .menu-table td { padding: 10px 6px; }
-      .item-name { font-size: 0.85rem; }
-      .item-desc { font-size: 0.72rem; }
-      .qty-btn { width: 32px; height: 32px; font-size: 1.1rem; }
-      .qty-num { min-width: 20px; font-size: 0.95rem; }
-      .footer { padding: 12px; }
-      .total-text { font-size: 1rem; }
-      .status { font-size: 1rem; }
-    }
+    /* 패널 내부 여백 (푸터 높이만큼) */
+    .panel-content { padding-bottom: 80px; }
   </style>
 </head>
 <body>
@@ -242,81 +177,72 @@
   <h1>탐색생물학2팀 회식 계산기</h1>
 </header>
 
-<!-- 전체 합계 -->
 <div class="summary-bar">
   <div class="s-item">
     <div class="s-label">전체 예산</div>
     <div class="s-val" id="sum-budget">0원</div>
   </div>
-  <div class="summary-divider"></div>
   <div class="s-item">
-    <div class="s-label">전체 사용액</div>
+    <div class="s-label">사용액</div>
     <div class="s-val" id="sum-total">0원</div>
   </div>
-  <div class="summary-divider"></div>
   <div class="s-item" id="sum-status-wrap">
-    <div class="s-label" id="sum-status-label">전체 잔액</div>
+    <div class="s-label" id="sum-status-label">잔액</div>
     <div class="s-val" id="sum-status">0원</div>
   </div>
 </div>
 
-<!-- 테이블 카드 요약 -->
-<div class="table-cards" id="table-cards"></div>
-
 <div class="tabs" id="tabs"></div>
+<div class="active-card" id="active-card">
+  <div>
+    <div class="ac-budget" id="ac-budget"></div>
+    <div class="ac-total"  id="ac-total">0원</div>
+  </div>
+  <div class="ac-status ok" id="ac-status"></div>
+</div>
 <div id="panels"></div>
 
 <script>
 const MENU = [
-  { name: "한우 생갈비",     desc: "1인분 250g", price: 109000, cat: "메인" },
-  { name: "한우 양념갈비",   desc: "1인분 270g", price:  79000, cat: "메인" },
-  { name: "한우 채끝등심",   desc: "1인분 150g", price:  69000, cat: "메인" },
-  { name: "한우 육회",       desc: "1인분 180g", price:  39000, cat: "메인" },
-  { name: "미국산 생갈비",   desc: "1인분 450g", price:  79000, cat: "메인" },
-  { name: "미국산 양념갈비", desc: "1인분 450g", price:  71000, cat: "메인" },
-  { name: "한우갈비탕",      desc: "1그릇",      price:  28000, cat: "식사" },
-  { name: "된장찌개",        desc: "1그릇",      price:   5000, cat: "식사" },
-  { name: "물냉면",          desc: "1그릇",      price:  12000, cat: "식사" },
-  { name: "비빔냉면",        desc: "1그릇",      price:  12000, cat: "식사" },
-  { name: "소주",            desc: "1병",        price:   6000, cat: "음료" },
-  { name: "맥주",            desc: "1병",        price:   6000, cat: "음료" },
-  { name: "음료수",          desc: "1개",        price:   2000, cat: "음료" },
+  { name: "한우 생갈비",     desc: "1인분 250g · 109,000원", price: 109000, cat: "메인" },
+  { name: "한우 양념갈비",   desc: "1인분 270g · 79,000원",  price:  79000, cat: "메인" },
+  { name: "한우 채끝등심",   desc: "1인분 150g · 69,000원",  price:  69000, cat: "메인" },
+  { name: "한우 육회",       desc: "1인분 180g · 39,000원",  price:  39000, cat: "메인" },
+  { name: "미국산 생갈비",   desc: "1인분 450g · 79,000원",  price:  79000, cat: "메인" },
+  { name: "미국산 양념갈비", desc: "1인분 450g · 71,000원",  price:  71000, cat: "메인" },
+  { name: "한우갈비탕",      desc: "1그릇 · 28,000원",       price:  28000, cat: "식사" },
+  { name: "된장찌개",        desc: "1그릇 · 5,000원",        price:   5000, cat: "식사" },
+  { name: "물냉면",          desc: "1그릇 · 12,000원",       price:  12000, cat: "식사" },
+  { name: "비빔냉면",        desc: "1그릇 · 12,000원",       price:  12000, cat: "식사" },
+  { name: "소주",            desc: "1병 · 6,000원",          price:   6000, cat: "음료" },
+  { name: "맥주",            desc: "1병 · 6,000원",          price:   6000, cat: "음료" },
+  { name: "음료수",          desc: "1개 · 2,000원",          price:   2000, cat: "음료" },
 ];
 
 const BUDGETS = [550714, 734286, 734286, 550714];
 const NUM_TABLES = 4;
-const catClass = { "메인": "badge-main", "점심": "badge-lunch", "식사": "badge-meal", "음료": "badge-drink" };
 
 const state = Array.from({ length: NUM_TABLES }, () => Array(MENU.length).fill(0));
+let currentTab = 0;
 
 function fmt(n) { return n.toLocaleString("ko-KR") + "원"; }
 
 function buildUI() {
   const tabsEl   = document.getElementById("tabs");
   const panelsEl = document.getElementById("panels");
-  const cardsEl  = document.getElementById("table-cards");
 
-  // 전체 예산 표시
-  const totalBudget = BUDGETS.reduce((a, b) => a + b, 0);
-  document.getElementById("sum-budget").textContent = fmt(totalBudget);
+  document.getElementById("sum-budget").textContent = fmt(BUDGETS.reduce((a,b)=>a+b,0));
+  document.getElementById("ac-budget").textContent  = `예산 ${fmt(BUDGETS[0])}`;
+  document.getElementById("ac-status").textContent  = `잔액 ${fmt(BUDGETS[0])}`;
+
+  // 카테고리 순서
+  const cats = ["메인", "식사", "음료"];
 
   for (let t = 0; t < NUM_TABLES; t++) {
-    // 카드
-    const card = document.createElement("div");
-    card.className = "table-card" + (t === 0 ? " active" : "");
-    card.id = `card-${t}`;
-    card.onclick = () => switchTab(t);
-    card.innerHTML = `
-      <div class="card-title">테이블 ${t + 1}</div>
-      <div class="card-budget">예산 ${fmt(BUDGETS[t])}</div>
-      <div class="card-total" id="card-total-${t}">0원</div>
-      <div class="card-status" id="card-status-${t}">잔액: ${fmt(BUDGETS[t])}</div>`;
-    cardsEl.appendChild(card);
-
     // 탭 버튼
     const btn = document.createElement("button");
     btn.className = "tab-btn" + (t === 0 ? " active" : "");
-    btn.textContent = `테이블 ${t + 1}`;
+    btn.textContent = `테이블 ${t+1}`;
     btn.onclick = () => switchTab(t);
     tabsEl.appendChild(btn);
 
@@ -325,64 +251,80 @@ function buildUI() {
     panel.className = "panel" + (t === 0 ? " active" : "");
     panel.id = `panel-${t}`;
 
-    let rows = "";
-    MENU.forEach((item, i) => {
-      rows += `
-        <tr>
-          <td class="name">
-            <div class="item-name">${item.name}</div>
-            <div class="item-desc">${item.desc}</div>
-            <span class="badge ${catClass[item.cat] || 'badge-meal'}">${item.cat}</span>
-          </td>
-          <td class="price">${fmt(item.price)}</td>
-          <td>
+    const content = document.createElement("div");
+    content.className = "panel-content";
+
+    cats.forEach(cat => {
+      const items = MENU.map((m,i)=>({...m,i})).filter(m=>m.cat===cat);
+      if (!items.length) return;
+
+      const catEl = document.createElement("div");
+      catEl.className = "cat-header";
+      catEl.textContent = cat;
+      content.appendChild(catEl);
+
+      const list = document.createElement("div");
+      list.className = "menu-list";
+
+      items.forEach(({ name, desc, i }) => {
+        list.innerHTML += `
+          <div class="menu-item">
+            <div class="menu-info">
+              <div class="menu-name">${name}</div>
+              <div class="menu-sub">${desc}</div>
+            </div>
             <div class="qty-ctrl">
               <button class="qty-btn" onclick="change(${t},${i},-1)">−</button>
               <span class="qty-num" id="qty-${t}-${i}">0</span>
               <button class="qty-btn" onclick="change(${t},${i},1)">+</button>
             </div>
-          </td>
-          <td class="amount" id="amt-${t}-${i}">0원</td>
-        </tr>`;
+          </div>`;
+      });
+
+      content.appendChild(list);
     });
 
-    panel.innerHTML = `
-      <table class="menu-table">
-        <thead>
-          <tr>
-            <th style="text-align:left">메뉴</th>
-            <th>단가</th>
-            <th>수량</th>
-            <th>금액</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div class="footer">
-        <div class="footer-left">
-          <span class="total-text" id="total-${t}">합계: 0원</span>
-          <span class="budget-info">예산: ${fmt(BUDGETS[t])}</span>
-        </div>
-        <span class="status" id="status-${t}">잔액: ${fmt(BUDGETS[t])}</span>
-        <button class="reset-btn" onclick="reset(${t})">초기화</button>
-      </div>`;
+    // 푸터
+    const footer = document.createElement("div");
+    footer.className = "footer";
+    footer.innerHTML = `
+      <div class="footer-left">
+        <div class="total-text" id="total-${t}">합계: 0원</div>
+        <div class="status ok" id="status-${t}">잔액: ${fmt(BUDGETS[t])}</div>
+      </div>
+      <button class="reset-btn" onclick="reset(${t})">초기화</button>`;
 
+    panel.appendChild(content);
+    panel.appendChild(footer);
     panelsEl.appendChild(panel);
   }
 }
 
 function switchTab(t) {
-  document.querySelectorAll(".tab-btn").forEach((b, i) =>
-    b.classList.toggle("active", i === t));
-  document.querySelectorAll(".panel").forEach((p, i) =>
-    p.classList.toggle("active", i === t));
-  document.querySelectorAll(".table-card").forEach((c, i) =>
-    c.classList.toggle("active", i === t));
+  currentTab = t;
+  document.querySelectorAll(".tab-btn").forEach((b,i) => b.classList.toggle("active", i===t));
+  document.querySelectorAll(".panel").forEach((p,i) => p.classList.toggle("active", i===t));
+  refreshActiveCard(t);
 }
 
-const DB_URL = "https://hoesik-calculator-default-rtdb.asia-southeast1.firebasedatabase.app";
+function refreshActiveCard(t) {
+  const total  = state[t].reduce((s,q,i)=>s+q*MENU[i].price, 0);
+  const rem    = BUDGETS[t] - total;
+  document.getElementById("ac-budget").textContent = `예산 ${fmt(BUDGETS[t])}`;
+  document.getElementById("ac-total").textContent  = fmt(total);
+  const acStatus = document.getElementById("ac-status");
+  if (rem >= 0) {
+    acStatus.textContent = `잔액 ${fmt(rem)}`;
+    acStatus.className   = "ac-status ok";
+  } else {
+    acStatus.textContent = `초과 ${fmt(-rem)}`;
+    acStatus.className   = "ac-status over";
+  }
+}
 
-let _protectedUntil = 0; // 이 시각 전까지는 poll이 로컬 상태를 덮어쓰지 않음
+/* ── Firebase ── */
+const DB_URL = "https://hoesik-calculator-default-rtdb.asia-southeast1.firebasedatabase.app";
+let _protectedUntil = 0;
 
 async function pushState() {
   try {
@@ -394,16 +336,14 @@ async function pushState() {
   } catch(e) { console.warn('Firebase 저장 실패', e); }
 }
 
-// Firebase는 배열을 {0:..., 1:...} 객체로 반환할 수 있어서 정규화 필요
 function toArr(val, len) {
   const arr = Array(len).fill(0);
   if (!val) return arr;
   if (Array.isArray(val)) {
-    val.forEach((v, i) => { if (i < len) arr[i] = v || 0; });
+    val.forEach((v,i)=>{ if(i<len) arr[i]=v||0; });
   } else if (typeof val === 'object') {
-    Object.entries(val).forEach(([k, v]) => {
-      const idx = parseInt(k);
-      if (!isNaN(idx) && idx < len) arr[idx] = v || 0;
+    Object.entries(val).forEach(([k,v])=>{
+      const idx=parseInt(k); if(!isNaN(idx)&&idx<len) arr[idx]=v||0;
     });
   }
   return arr;
@@ -413,9 +353,11 @@ function applyStateToUI(newState) {
   newState.forEach((table, t) => {
     table.forEach((qty, i) => {
       state[t][i] = qty || 0;
-      document.getElementById(`qty-${t}-${i}`).textContent = state[t][i];
-      document.getElementById(`amt-${t}-${i}`).textContent =
-        state[t][i] === 0 ? "0원" : fmt(state[t][i] * MENU[i].price);
+      const numEl = document.getElementById(`qty-${t}-${i}`);
+      if (numEl) {
+        numEl.textContent = state[t][i];
+        numEl.className   = state[t][i] > 0 ? "qty-num nonzero" : "qty-num";
+      }
     });
     refreshTable(t);
   });
@@ -425,7 +367,7 @@ function applyStateToUI(newState) {
 async function poll() {
   try {
     if (Date.now() >= _protectedUntil) {
-      const res = await fetch(`${DB_URL}/state.json?t=${Date.now()}`);
+      const res  = await fetch(`${DB_URL}/state.json?t=${Date.now()}`);
       const data = await res.json();
       if (data && !data.error) {
         const normalized = toArr(data, NUM_TABLES).map(row => toArr(row, MENU.length));
@@ -436,15 +378,11 @@ async function poll() {
   setTimeout(poll, 1500);
 }
 
-function startSync() {
-  poll();
-}
-
 function change(t, i, delta) {
   state[t][i] = Math.max(0, state[t][i] + delta);
-  document.getElementById(`qty-${t}-${i}`).textContent = state[t][i];
-  document.getElementById(`amt-${t}-${i}`).textContent =
-    state[t][i] === 0 ? "0원" : fmt(state[t][i] * MENU[i].price);
+  const numEl = document.getElementById(`qty-${t}-${i}`);
+  numEl.textContent = state[t][i];
+  numEl.className   = state[t][i] > 0 ? "qty-num nonzero" : "qty-num";
   refreshTable(t);
   refreshSummary();
   _protectedUntil = Date.now() + 3000;
@@ -452,38 +390,22 @@ function change(t, i, delta) {
 }
 
 function refreshTable(t) {
-  const total  = state[t].reduce((s, q, i) => s + q * MENU[i].price, 0);
-  const budget = BUDGETS[t];
-  const rem    = budget - total;
+  const total = state[t].reduce((s,q,i)=>s+q*MENU[i].price, 0);
+  const rem   = BUDGETS[t] - total;
 
-  document.getElementById(`total-${t}`).textContent = `합계: ${fmt(total)}`;
-
-  // 패널 footer 상태
+  const totalEl  = document.getElementById(`total-${t}`);
   const statusEl = document.getElementById(`status-${t}`);
-  if (rem >= 0) {
-    statusEl.textContent  = `잔액: ${fmt(rem)}`;
-    statusEl.className    = "status ok";
-  } else {
-    statusEl.textContent  = `초과: ${fmt(-rem)}`;
-    statusEl.className    = "status over";
+  if (totalEl)  totalEl.textContent = `합계: ${fmt(total)}`;
+  if (statusEl) {
+    statusEl.textContent = rem>=0 ? `잔액: ${fmt(rem)}` : `초과: ${fmt(-rem)}`;
+    statusEl.className   = rem>=0 ? "status ok" : "status over";
   }
-
-  // 카드 상태
-  document.getElementById(`card-total-${t}`).textContent = fmt(total);
-  const cardStatus = document.getElementById(`card-status-${t}`);
-  if (rem >= 0) {
-    cardStatus.textContent = `잔액: ${fmt(rem)}`;
-    cardStatus.className   = "card-status ok";
-  } else {
-    cardStatus.textContent = `초과: ${fmt(-rem)}`;
-    cardStatus.className   = "card-status over";
-  }
+  if (t === currentTab) refreshActiveCard(t);
 }
 
 function refreshSummary() {
-  const totalSpent  = state.reduce((sum, table) =>
-    sum + table.reduce((s, q, i) => s + q * MENU[i].price, 0), 0);
-  const totalBudget = BUDGETS.reduce((a, b) => a + b, 0);
+  const totalSpent  = state.reduce((sum,table)=>sum+table.reduce((s,q,i)=>s+q*MENU[i].price,0),0);
+  const totalBudget = BUDGETS.reduce((a,b)=>a+b,0);
   const rem         = totalBudget - totalSpent;
 
   document.getElementById("sum-total").textContent = fmt(totalSpent);
@@ -491,24 +413,17 @@ function refreshSummary() {
   const wrap  = document.getElementById("sum-status-wrap");
   const label = document.getElementById("sum-status-label");
   const val   = document.getElementById("sum-status");
-
-  if (rem >= 0) {
-    label.textContent = "전체 잔액";
-    val.textContent   = fmt(rem);
-    wrap.className    = "s-item ok";
-  } else {
-    label.textContent = "전체 초과";
-    val.textContent   = fmt(-rem);
-    wrap.className    = "s-item over";
-  }
+  label.textContent = rem>=0 ? "잔액" : "초과";
+  val.textContent   = rem>=0 ? fmt(rem) : fmt(-rem);
+  wrap.className    = rem>=0 ? "s-item ok" : "s-item over";
 }
 
 function reset(t) {
-  if (!confirm(`테이블 ${t + 1}을 초기화하시겠습니까?`)) return;
+  if (!confirm(`테이블 ${t+1}을 초기화하시겠습니까?`)) return;
   state[t].fill(0);
-  MENU.forEach((_, i) => {
-    document.getElementById(`qty-${t}-${i}`).textContent = "0";
-    document.getElementById(`amt-${t}-${i}`).textContent = "0원";
+  MENU.forEach((_,i)=>{
+    const numEl = document.getElementById(`qty-${t}-${i}`);
+    if (numEl) { numEl.textContent = "0"; numEl.className = "qty-num"; }
   });
   refreshTable(t);
   refreshSummary();
@@ -517,7 +432,7 @@ function reset(t) {
 }
 
 buildUI();
-startSync();
+poll();
 </script>
 </body>
 </html>
