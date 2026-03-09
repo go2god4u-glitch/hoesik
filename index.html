@@ -42,6 +42,37 @@
     .s-item.ok .s-val  { color: #4ade80; }
     .s-item.over .s-val { color: #f87171; }
 
+    /* 테이블 카드 요약 */
+    .table-cards {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      background: #f2ede8;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .table-cards::-webkit-scrollbar { display: none; }
+
+    .table-card {
+      flex-shrink: 0;
+      width: 120px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .table-card.active { border-color: #8b1a1a; }
+    .card-title  { font-size: 0.72rem; font-weight: 700; color: #8b1a1a; margin-bottom: 4px; }
+    .card-budget { font-size: 0.68rem; color: #aaa; margin-bottom: 4px; }
+    .card-total  { font-size: 0.9rem; font-weight: 700; }
+    .card-status { font-size: 0.72rem; font-weight: 700; margin-top: 3px; }
+    .card-status.ok   { color: #27ae60; }
+    .card-status.over { color: #c0392b; }
+
     /* 테이블 탭 */
     .tabs {
       display: grid;
@@ -192,6 +223,7 @@
   </div>
 </div>
 
+<div class="table-cards" id="table-cards"></div>
 <div class="tabs" id="tabs"></div>
 <div class="active-card" id="active-card">
   <div>
@@ -230,6 +262,7 @@ function fmt(n) { return n.toLocaleString("ko-KR") + "원"; }
 function buildUI() {
   const tabsEl   = document.getElementById("tabs");
   const panelsEl = document.getElementById("panels");
+  const cardsEl  = document.getElementById("table-cards");
 
   document.getElementById("sum-budget").textContent = fmt(BUDGETS.reduce((a,b)=>a+b,0));
   document.getElementById("ac-budget").textContent  = `예산 ${fmt(BUDGETS[0])}`;
@@ -239,6 +272,18 @@ function buildUI() {
   const cats = ["메인", "식사", "음료"];
 
   for (let t = 0; t < NUM_TABLES; t++) {
+    // 요약 카드
+    const card = document.createElement("div");
+    card.className = "table-card" + (t === 0 ? " active" : "");
+    card.id = `card-${t}`;
+    card.onclick = () => switchTab(t);
+    card.innerHTML = `
+      <div class="card-title">테이블 ${t+1}</div>
+      <div class="card-budget">예산 ${fmt(BUDGETS[t])}</div>
+      <div class="card-total" id="card-total-${t}">0원</div>
+      <div class="card-status ok" id="card-status-${t}">잔액 ${fmt(BUDGETS[t])}</div>`;
+    cardsEl.appendChild(card);
+
     // 탭 버튼
     const btn = document.createElement("button");
     btn.className = "tab-btn" + (t === 0 ? " active" : "");
@@ -304,6 +349,7 @@ function switchTab(t) {
   currentTab = t;
   document.querySelectorAll(".tab-btn").forEach((b,i) => b.classList.toggle("active", i===t));
   document.querySelectorAll(".panel").forEach((p,i) => p.classList.toggle("active", i===t));
+  document.querySelectorAll(".table-card").forEach((c,i) => c.classList.toggle("active", i===t));
   refreshActiveCard(t);
 }
 
@@ -401,6 +447,12 @@ function refreshTable(t) {
     statusEl.className   = rem>=0 ? "status ok" : "status over";
   }
   if (t === currentTab) refreshActiveCard(t);
+
+  // 요약 카드 업데이트
+  document.getElementById(`card-total-${t}`).textContent = fmt(total);
+  const cardStatus = document.getElementById(`card-status-${t}`);
+  cardStatus.textContent = rem>=0 ? `잔액 ${fmt(rem)}` : `초과 ${fmt(-rem)}`;
+  cardStatus.className   = rem>=0 ? "card-status ok" : "card-status over";
 }
 
 function refreshSummary() {
