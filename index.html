@@ -384,10 +384,9 @@ function switchTab(t) {
 
 const DB_URL = "https://hoesik-calculator-default-rtdb.asia-southeast1.firebasedatabase.app";
 
-let _isPushing = false;
+let _protectedUntil = 0; // 이 시각 전까지는 poll이 로컬 상태를 덮어쓰지 않음
 
 async function pushState() {
-  _isPushing = true;
   try {
     await fetch(`${DB_URL}/state.json`, {
       method: 'PUT',
@@ -395,7 +394,6 @@ async function pushState() {
       body: JSON.stringify(state)
     });
   } catch(e) { console.warn('Firebase 저장 실패', e); }
-  _isPushing = false;
 }
 
 // Firebase는 배열을 {0:..., 1:...} 객체로 반환할 수 있어서 정규화 필요
@@ -428,7 +426,7 @@ function applyStateToUI(newState) {
 
 async function poll() {
   try {
-    if (!_isPushing) {
+    if (Date.now() >= _protectedUntil) {
       const res = await fetch(`${DB_URL}/state.json?t=${Date.now()}`);
       const data = await res.json();
       if (data) {
@@ -451,6 +449,7 @@ function change(t, i, delta) {
     state[t][i] === 0 ? "0원" : fmt(state[t][i] * MENU[i].price);
   refreshTable(t);
   refreshSummary();
+  _protectedUntil = Date.now() + 3000;
   pushState();
 }
 
@@ -515,6 +514,7 @@ function reset(t) {
   });
   refreshTable(t);
   refreshSummary();
+  _protectedUntil = Date.now() + 3000;
   pushState();
 }
 
