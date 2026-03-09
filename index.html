@@ -409,15 +409,31 @@ function applyStateToUI(newState) {
 
 let _lastSnapshot = null;
 
+// Firebase는 배열을 {0:..., 1:...} 객체로 반환할 수 있어서 정규화 필요
+function toArr(val, len) {
+  const arr = Array(len).fill(0);
+  if (!val) return arr;
+  if (Array.isArray(val)) {
+    val.forEach((v, i) => { if (i < len) arr[i] = v || 0; });
+  } else if (typeof val === 'object') {
+    Object.entries(val).forEach(([k, v]) => {
+      const i = parseInt(k);
+      if (!isNaN(i) && i < len) arr[i] = v || 0;
+    });
+  }
+  return arr;
+}
+
 async function poll() {
   try {
     const res = await fetch(`${DB_URL}/state.json?t=${Date.now()}`);
     const data = await res.json();
-    if (data && Array.isArray(data)) {
-      const snap = JSON.stringify(data);
+    if (data) {
+      const normalized = toArr(data, NUM_TABLES).map(t => toArr(t, MENU.length));
+      const snap = JSON.stringify(normalized);
       if (snap !== _lastSnapshot) {
         _lastSnapshot = snap;
-        applyStateToUI(data);
+        applyStateToUI(normalized);
       }
     }
   } catch(e) {}
