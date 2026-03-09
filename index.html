@@ -44,19 +44,14 @@
 
     /* 테이블 카드 요약 */
     .table-cards {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
       padding: 10px 16px;
-      overflow-x: auto;
       background: #f2ede8;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
     }
-    .table-cards::-webkit-scrollbar { display: none; }
 
     .table-card {
-      flex-shrink: 0;
-      width: 120px;
       background: #fff;
       border-radius: 10px;
       padding: 10px 12px;
