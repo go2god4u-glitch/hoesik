@@ -435,6 +435,7 @@ function change(t, i, delta) {
     state[t][i] === 0 ? "0원" : fmt(state[t][i] * MENU[i].price);
   refreshTable(t);
   refreshSummary();
+  _lastSnapshot = JSON.stringify(state); // 폴링이 덮어쓰지 않도록 미리 갱신
   pushState();
 }
 
@@ -499,6 +500,7 @@ function reset(t) {
   });
   refreshTable(t);
   refreshSummary();
+  _lastSnapshot = JSON.stringify(state); // 폴링이 덮어쓰지 않도록 미리 갱신
   pushState();
 }
 
