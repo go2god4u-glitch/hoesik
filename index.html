@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>탐색생물학2팀 회식 계산기</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background: #f5f5f0;
+      color: #222;
+    }
+
+    header {
+      background: #8b1a1a;
+      color: #fff;
+      padding: 16px 24px;
+    }
+
+    header h1 { font-size: 1.3rem; font-weight: 700; }
+
+    /* 전체 합계 바 */
+    .summary-bar {
+      background: #3d0a0a;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 24px;
+    }
+
+    .summary-bar .s-label {
+      font-size: 0.82rem;
+      opacity: 0.7;
+      margin-bottom: 2px;
+    }
+
+    .summary-bar .s-val {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .summary-bar .s-item { min-width: 120px; }
+
+    .summary-bar .s-item.ok .s-val  { color: #4ade80; }
+    .summary-bar .s-item.over .s-val { color: #f87171; }
+
+    .summary-divider {
+      width: 1px;
+      height: 36px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* 테이블 요약 카드 */
+    .table-cards {
+      display: flex;
+      gap: 10px;
+      padding: 14px 20px;
+      flex-wrap: wrap;
+      background: #f0ebe6;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .table-card {
+      flex: 1;
+      min-width: 140px;
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+    }
+
+    .table-card:hover { border-color: #8b1a1a; }
+    .table-card.active { border-color: #8b1a1a; }
+
+    .card-title { font-size: 0.8rem; font-weight: 700; color: #8b1a1a; margin-bottom: 4px; }
+    .card-budget { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
+    .card-total { font-size: 1rem; font-weight: 700; }
+    .card-status { font-size: 0.82rem; font-weight: 700; margin-top: 3px; }
+    .card-status.ok { color: #27ae60; }
+    .card-status.over { color: #c0392b; }
+
+    /* tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 16px 20px 0;
+      border-bottom: 2px solid #8b1a1a;
+    }
+
+    .tab-btn {
+      padding: 10px 28px;
+      border: none;
+      border-radius: 8px 8px 0 0;
+      background: #ddd;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .tab-btn:hover { background: #ccc; }
+    .tab-btn.active { background: #8b1a1a; color: #fff; }
+
+    /* panels */
+    .panel { display: none; padding: 20px; }
+    .panel.active { display: block; }
+
+    /* menu table */
+    .menu-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .menu-table thead { background: #f0e6e6; }
+
+    .menu-table thead th {
+      padding: 12px 10px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #5a1010;
+    }
+
+    .menu-table tbody tr:not(:last-child) { border-bottom: 1px solid #f0ece8; }
+    .menu-table tbody tr:hover { background: #fdf8f8; }
+
+    .menu-table td {
+      padding: 12px 10px;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .menu-table td.name { text-align: left; }
+
+    .item-name { font-weight: 600; font-size: 0.95rem; }
+    .item-desc { font-size: 0.78rem; color: #888; margin-top: 2px; }
+    .price { color: #444; font-size: 0.9rem; white-space: nowrap; }
+
+    .qty-ctrl { display: inline-flex; align-items: center; gap: 6px; }
+
+    .qty-btn {
+      width: 30px; height: 30px;
+      border: 1.5px solid #c44;
+      border-radius: 50%;
+      background: #fff;
+      color: #c44;
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+      font-weight: 700;
+      transition: background 0.12s, color 0.12s;
+    }
+
+    .qty-btn:hover { background: #c44; color: #fff; }
+
+    .qty-num {
+      font-size: 1rem; font-weight: 700;
+      min-width: 24px; text-align: center;
+    }
+
+    .amount { font-weight: 600; color: #333; white-space: nowrap; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    .badge-main  { background: #fdecea; color: #c0392b; }
+    .badge-lunch { background: #e8f4fd; color: #2471a3; }
+    .badge-meal  { background: #eafaf1; color: #1e8449; }
+    .badge-drink { background: #f3e8fd; color: #7d3c98; }
+
+    /* footer */
+    .footer {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-top: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer-left { display: flex; flex-direction: column; gap: 4px; }
+    .total-text { font-size: 1.2rem; font-weight: 700; }
+    .budget-info { font-size: 0.85rem; color: #888; }
+
+    .status { font-size: 1.15rem; font-weight: 700; }
+    .status.over { color: #c0392b; }
+    .status.ok   { color: #27ae60; }
+
+    .reset-btn {
+      padding: 8px 20px;
+      background: #8b1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .reset-btn:hover { background: #a52020; }
+
+    @media (max-width: 600px) {
+      .tab-btn { padding: 8px 16px; }
+      .menu-table thead th:nth-child(3) { display: none; }
+      .menu-table td:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🥩 탐색생물학2팀 회식 계산기</h1>
+</header>
+
+<!-- 전체 합계 -->
+<div class="summary-bar">
+  <div class="s-item">
+    <div class="s-label">전체 예산</div>
+    <div class="s-val" id="sum-budget">0원</div>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="s-item">
+    <div class="s-label">전체 사용액</div>
+    <div class="s-val" id="sum-total">0원</div>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="s-item" id="sum-status-wrap">
+    <div class="s-label" id="sum-status-label">전체 잔액</div>
+    <div class="s-val" id="sum-status">0원</div>
+  </div>
+</div>
+
+<!-- 테이블 카드 요약 -->
+<div class="table-cards" id="table-cards"></div>
+
+<div class="tabs" id="tabs"></div>
+<div id="panels"></div>
+
+<script>
+const MENU = [
+  { name: "한우 생갈비",     desc: "1인분 250g", price: 109000, cat: "메인" },
+  { name: "한우 양념갈비",   desc: "1인분 270g", price:  79000, cat: "메인" },
+  { name: "한우 채끝등심",   desc: "1인분 150g", price:  69000, cat: "메인" },
+  { name: "한우 육회",       desc: "1인분 180g", price:  39000, cat: "메인" },
+  { name: "미국산 생갈비",   desc: "1인분 450g", price:  79000, cat: "메인" },
+  { name: "미국산 양념갈비", desc: "1인분 450g", price:  71000, cat: "메인" },
+  { name: "한우갈비탕",      desc: "1그릇",      price:  28000, cat: "식사" },
+  { name: "된장찌개",        desc: "1그릇",      price:   5000, cat: "식사" },
+  { name: "물냉면",          desc: "1그릇",      price:  12000, cat: "식사" },
+  { name: "비빔냉면",        desc: "1그릇",      price:  12000, cat: "식사" },
+  { name: "소주",            desc: "1병",        price:   6000, cat: "음료" },
+  { name: "맥주",            desc: "1병",        price:   6000, cat: "음료" },
+  { name: "음료수",          desc: "1개",        price:   2000, cat: "음료" },
+];
+
+const BUDGETS = [550714, 734286, 734286, 550714];
+const NUM_TABLES = 4;
+const catClass = { "메인": "badge-main", "점심": "badge-lunch", "식사": "badge-meal", "음료": "badge-drink" };
+
+const state = Array.from({ length: NUM_TABLES }, () => Array(MENU.length).fill(0));
+
+function fmt(n) { return n.toLocaleString("ko-KR") + "원"; }
+
+function buildUI() {
+  const tabsEl   = document.getElementById("tabs");
+  const panelsEl = document.getElementById("panels");
+  const cardsEl  = document.getElementById("table-cards");
+
+  // 전체 예산 표시
+  const totalBudget = BUDGETS.reduce((a, b) => a + b, 0);
+  document.getElementById("sum-budget").textContent = fmt(totalBudget);
+
+  for (let t = 0; t < NUM_TABLES; t++) {
+    // 카드
+    const card = document.createElement("div");
+    card.className = "table-card" + (t === 0 ? " active" : "");
+    card.id = `card-${t}`;
+    card.onclick = () => switchTab(t);
+    card.innerHTML = `
+      <div class="card-title">테이블 ${t + 1}</div>
+      <div class="card-budget">예산 ${fmt(BUDGETS[t])}</div>
+      <div class="card-total" id="card-total-${t}">0원</div>
+      <div class="card-status" id="card-status-${t}">잔액: ${fmt(BUDGETS[t])}</div>`;
+    cardsEl.appendChild(card);
+
+    // 탭 버튼
+    const btn = document.createElement("button");
+    btn.className = "tab-btn" + (t === 0 ? " active" : "");
+    btn.textContent = `테이블 ${t + 1}`;
+    btn.onclick = () => switchTab(t);
+    tabsEl.appendChild(btn);
+
+    // 패널
+    const panel = document.createElement("div");
+    panel.className = "panel" + (t === 0 ? " active" : "");
+    panel.id = `panel-${t}`;
+
+    let rows = "";
+    MENU.forEach((item, i) => {
+      rows += `
+        <tr>
+          <td class="name">
+            <div class="item-name">${item.name}</div>
+            <div class="item-desc">${item.desc}</div>
+            <span class="badge ${catClass[item.cat] || 'badge-meal'}">${item.cat}</span>
+          </td>
+          <td class="price">${fmt(item.price)}</td>
+          <td>
+            <div class="qty-ctrl">
+              <button class="qty-btn" onclick="change(${t},${i},-1)">−</button>
+              <span class="qty-num" id="qty-${t}-${i}">0</span>
+              <button class="qty-btn" onclick="change(${t},${i},1)">+</button>
+            </div>
+          </td>
+          <td class="amount" id="amt-${t}-${i}">0원</td>
+        </tr>`;
+    });
+
+    panel.innerHTML = `
+      <table class="menu-table">
+        <thead>
+          <tr>
+            <th style="text-align:left">메뉴</th>
+            <th>단가</th>
+            <th>수량</th>
+            <th>금액</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="footer">
+        <div class="footer-left">
+          <span class="total-text" id="total-${t}">합계: 0원</span>
+          <span class="budget-info">예산: ${fmt(BUDGETS[t])}</span>
+        </div>
+        <span class="status" id="status-${t}">잔액: ${fmt(BUDGETS[t])}</span>
+        <button class="reset-btn" onclick="reset(${t})">초기화</button>
+      </div>`;
+
+    panelsEl.appendChild(panel);
+  }
+}
+
+function switchTab(t) {
+  document.querySelectorAll(".tab-btn").forEach((b, i) =>
+    b.classList.toggle("active", i === t));
+  document.querySelectorAll(".panel").forEach((p, i) =>
+    p.classList.toggle("active", i === t));
+  document.querySelectorAll(".table-card").forEach((c, i) =>
+    c.classList.toggle("active", i === t));
+}
+
+const DB_URL = "https://hoesik-calculator-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+async function pushState() {
+  try {
+    await fetch(`${DB_URL}/state.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    });
+  } catch(e) { console.warn('Firebase 저장 실패', e); }
+}
+
+function applyStateToUI(newState) {
+  newState.forEach((table, t) => {
+    table.forEach((qty, i) => {
+      state[t][i] = qty || 0;
+      document.getElementById(`qty-${t}-${i}`).textContent = state[t][i];
+      document.getElementById(`amt-${t}-${i}`).textContent =
+        state[t][i] === 0 ? "0원" : fmt(state[t][i] * MENU[i].price);
+    });
+    refreshTable(t);
+  });
+  refreshSummary();
+}
+
+function startSync() {
+  const es = new EventSource(`${DB_URL}/state.json`);
+  es.addEventListener('put', e => {
+    const { data } = JSON.parse(e.data);
+    if (data && Array.isArray(data)) applyStateToUI(data);
+  });
+  es.onerror = () => console.warn('Firebase 연결 재시도 중...');
+}
+
+function change(t, i, delta) {
+  state[t][i] = Math.max(0, state[t][i] + delta);
+  document.getElementById(`qty-${t}-${i}`).textContent = state[t][i];
+  document.getElementById(`amt-${t}-${i}`).textContent =
+    state[t][i] === 0 ? "0원" : fmt(state[t][i] * MENU[i].price);
+  refreshTable(t);
+  refreshSummary();
+  pushState();
+}
+
+function refreshTable(t) {
+  const total  = state[t].reduce((s, q, i) => s + q * MENU[i].price, 0);
+  const budget = BUDGETS[t];
+  const rem    = budget - total;
+
+  document.getElementById(`total-${t}`).textContent = `합계: ${fmt(total)}`;
+
+  // 패널 footer 상태
+  const statusEl = document.getElementById(`status-${t}`);
+  if (rem >= 0) {
+    statusEl.textContent  = `잔액: ${fmt(rem)}`;
+    statusEl.className    = "status ok";
+  } else {
+    statusEl.textContent  = `초과: ${fmt(-rem)}`;
+    statusEl.className    = "status over";
+  }
+
+  // 카드 상태
+  document.getElementById(`card-total-${t}`).textContent = fmt(total);
+  const cardStatus = document.getElementById(`card-status-${t}`);
+  if (rem >= 0) {
+    cardStatus.textContent = `잔액: ${fmt(rem)}`;
+    cardStatus.className   = "card-status ok";
+  } else {
+    cardStatus.textContent = `초과: ${fmt(-rem)}`;
+    cardStatus.className   = "card-status over";
+  }
+}
+
+function refreshSummary() {
+  const totalSpent  = state.reduce((sum, table) =>
+    sum + table.reduce((s, q, i) => s + q * MENU[i].price, 0), 0);
+  const totalBudget = BUDGETS.reduce((a, b) => a + b, 0);
+  const rem         = totalBudget - totalSpent;
+
+  document.getElementById("sum-total").textContent = fmt(totalSpent);
+
+  const wrap  = document.getElementById("sum-status-wrap");
+  const label = document.getElementById("sum-status-label");
+  const val   = document.getElementById("sum-status");
+
+  if (rem >= 0) {
+    label.textContent = "전체 잔액";
+    val.textContent   = fmt(rem);
+    wrap.className    = "s-item ok";
+  } else {
+    label.textContent = "전체 초과";
+    val.textContent   = fmt(-rem);
+    wrap.className    = "s-item over";
+  }
+}
+
+function reset(t) {
+  if (!confirm(`테이블 ${t + 1}을 초기화하시겠습니까?`)) return;
+  state[t].fill(0);
+  MENU.forEach((_, i) => {
+    document.getElementById(`qty-${t}-${i}`).textContent = "0";
+    document.getElementById(`amt-${t}-${i}`).textContent = "0원";
+  });
+  refreshTable(t);
+  refreshSummary();
+  pushState();
+}
+
+buildUI();
+startSync();
+</script>
+</body>
+</html>
